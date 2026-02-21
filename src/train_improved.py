@@ -16,10 +16,10 @@ from dataset import get_dataloaders
 DATA_DIR   = 'data/raw/chest_xray'
 SAVE_PATH  = 'models/chest_xray_model_v2.pth'
 DEVICE     = torch.device('cpu')
-BATCH_SIZE = 16
-MAX_EPOCHS = 20
+BATCH_SIZE = 32
+MAX_EPOCHS = 25
 LR         = 0.0001
-PATIENCE   = 5
+# train_dataset = kaggle/input/
 
 print("="*60)
 print("   IMPROVED TRAINING WITH EARLY STOPPING")
@@ -28,23 +28,28 @@ print(f"  Device       : {DEVICE}")
 print(f"  Batch size   : {BATCH_SIZE}")
 print(f"  Max Epochs   : {MAX_EPOCHS}")
 print(f"  Learning Rate: {LR}")
-print(f"  Patience     : {PATIENCE} epochs")
+# print(f"  Patience     : {PATIENCE} epochs")
 print("="*60)
 
 # ── Load and Combine Data ─────────────────────────
 print("\n📂 Loading datasets...")
 train_loader, val_loader, test_loader = get_dataloaders(DATA_DIR, BATCH_SIZE)
 
-print("\n💡 Combining train + val for more training data...")
-combined_dataset = ConcatDataset([train_loader.dataset, val_loader.dataset])
 train_loader = DataLoader(
-    combined_dataset, 
+    train_dataset, 
+    batch_size=BATCH_SIZE,
+    shuffle=True,
+    num_workers=0
+)
+val_loader = DataLoader(
+    val_dataset,
     batch_size=BATCH_SIZE,
     shuffle=True,
     num_workers=0
 )
 
-print(f"✓ Training images: {len(combined_dataset)}")
+print(f"✓ Training images: {len(train_loader.dataset)}")
+print(f"✓ Validation images: {len(val_loader.dataset)}")
 print(f"✓ Test images: {len(test_loader.dataset)}")
 
 # ── Build Model ────────────────────────────────────
@@ -140,31 +145,15 @@ for epoch in range(MAX_EPOCHS):
     history['test_loss'].append(test_loss)
     history['test_acc'].append(test_acc)
     
-    # Early stopping check
-    if test_acc > best_test_acc:
-        improvement = test_acc - best_test_acc
-        best_test_acc = test_acc
-        torch.save(model.state_dict(), SAVE_PATH)
-        patience_counter = 0
-        saved = f"✓ SAVED! (+{improvement:.1f}%)"
-    else:
-        patience_counter += 1
-        saved = f"(Patience: {patience_counter}/{PATIENCE})"
-    
     epoch_time = time.time() - start_time
     
     print(f"\n{'─'*60}")
     print(f"  Epoch {epoch+1}/{MAX_EPOCHS} Complete ({epoch_time:.0f}s)")
     print(f"  Train → Loss: {train_loss:.4f} | Acc: {train_acc:.2f}%")
-    print(f"  Test  → Loss: {test_loss:.4f} | Acc: {test_acc:.2f}% {saved}")
+    print(f"  Test  → Loss: {test_loss:.4f} | Acc: {test_acc:.2f}%")
     print(f"  Best Test Acc: {best_test_acc:.2f}%")
     print(f"{'─'*60}\n")
-    
-    # Stop if no improvement
-    if patience_counter >= PATIENCE:
-        print(f"\n⚠️  Early stopping! No improvement for {PATIENCE} epochs.")
-        print(f"   Best test accuracy: {best_test_acc:.2f}%\n")
-        break
+
 
 # ── Plot Training Curves ───────────────────────────
 print("📊 Generating training plots...")
