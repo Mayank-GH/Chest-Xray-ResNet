@@ -22,8 +22,8 @@ SAVE_PATH   = "pneumonia_resnet18.pth"
 train_transforms = transforms.Compose([
     transforms.Resize((IMG_SIZE, IMG_SIZE)),              #resizes image to 224*224
     transforms.RandomHorizontalFlip(),                    #flip
-    transforms.RandomRotation(10),                        #rotation
-    transforms.ColorJitter(brightness=0.2, contrast=0.2), #randomly altering brightness,contrast etc
+    transforms.RandomRotation(15),                        #rotation
+    transforms.ColorJitter(brightness=0.2, contrast=0.2), #randomly alters brightness,contrast etc
     transforms.ToTensor(),                                #converts image to a multidimensional array(tensor) so gpu can better process it 
     transforms.Normalize([0.485, 0.456, 0.406],           #standardization or z-score normalization. was used in the original imagenet
                          [0.229, 0.224, 0.225]),          #output = (input - mean)/std -> ([R,G,B])
